@@ -1,0 +1,5 @@
+Flask
+celery[redis]
+#flask-ngrok
+urllib3
+uwsgi
