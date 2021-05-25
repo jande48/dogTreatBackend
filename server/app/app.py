@@ -1,13 +1,23 @@
 from flask import Flask, jsonify, json, request
 from celery import Celery
-#from flask_ngrok import run_with_ngrok
+import sqlite3, os
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
 app = Flask(__name__)
 #run_with_ngrok(app)
 simple_app = Celery('simple_worker', broker='redis://redis:6379/0', backend='redis://redis:6379/0')
-
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///jsonObject.sqlite3.db'
+db = SQLAlchemy(app)
 # location of localhost:3000
 # http://6f3e6bd3bc68.ngrok.io 
 
+class jsonObject(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    jsonData = db.Column(db.Text, nullable=False)
+    
+    def __init__(self,jsonData):
+      self.jsonData = jsonData
 
 @app.route('/', methods=['POST','GET'])
 def postSmeeWebHook():
@@ -17,10 +27,8 @@ def postSmeeWebHook():
 
 @app.route('/api', methods=['GET'])
 def index():
-  return jsonify({
-    "channel": "The Show",
-    "tutorial": "React, Flask and Docker Jacob"
-  })
+  lastDBentry = json.loads(jsonObject.query.order_by(jsonObject.id.desc()).first().jsonData)
+  return jsonify(lastDBentry)
 
 @app.route('/api/dispenseTreatRoute', methods=['GET'])
 def dispenseTreatRoute():
